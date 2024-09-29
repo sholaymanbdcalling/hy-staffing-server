@@ -2,6 +2,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import User from '../models/userModel.js';
 import EmailSend from '../utils/EmailHelper.js';
+import { generateToken } from '../utils/generateToken.js';
 
 const registerUser = async (req, res) => {
   try {
@@ -96,6 +97,55 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-const loginUser = async (req, res) => {};
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
 
-export { registerUser, verifyEmail, loginUser };
+  //   find user
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, 'User does not exist');
+  }
+
+  //   check is password valid
+  const isPasswordValid = await user.isValidPassword(password);
+  if (!isPasswordValid) {
+    throw new ApiError(401, 'Invalid user credentials');
+  }
+
+  const token = await generateToken(user._id);
+
+  const loggedInUser = await User.findById(user._id).select('-password -otp');
+
+  const option = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie('token', token, option)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          token,
+        },
+        'User logged in successfully',
+      ),
+    );
+};
+
+const logoutUser = async (req, res) => {
+  const option = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie('token', option)
+    .json(new ApiResponse(200, {}, 'User logged out successfully'));
+};
+
+export { registerUser, verifyEmail, loginUser, logoutUser };

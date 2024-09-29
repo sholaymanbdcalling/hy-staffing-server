@@ -43,13 +43,8 @@ userSchema.methods.isValidPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-// Find user by email
-userSchema.statics.findByEmail = function (email) {
-  return this.findOne({ email });
-};
-
 // Generate token
-userSchema.methods.generateToken = async function () {
+userSchema.methods.generateAccessToken = async function () {
   return jwt.sign(
     {
       _id: this._id,
