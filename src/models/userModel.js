@@ -16,6 +16,10 @@ const userSchema = new Schema(
       type: String,
       required: [true, 'Password is required'],
     },
+    role: {
+      type: String,
+      required: [true, 'Role is required'],
+    },
     otp: {
       type: Number,
     },
@@ -49,6 +53,7 @@ userSchema.methods.generateAccessToken = async function () {
     {
       _id: this._id,
       email: this.email,
+      role: this.role,
     },
     process.env.TOKEN_SECRET,
     { expiresIn: process.env.TOKEN_EXPIRY },

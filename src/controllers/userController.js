@@ -6,7 +6,7 @@ import { generateToken } from '../utils/generateToken.js';
 
 const registerUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
     const subject = 'Email verification';
     const OTP = Math.floor(100000 + Math.random() * 900000)
       .toString()
@@ -14,8 +14,8 @@ const registerUser = async (req, res) => {
     const text = `Your email verification code is ${OTP}`;
 
     // Validate required fields
-    if (!email?.trim() || !password?.trim()) {
-      return res.status(400).json({ message: 'All fields are required' });
+    if ([email, password, role].some((field) => field?.trim() === '')) {
+      throw new ApiError(400, 'All fields are required');
     }
 
     // Check for existing user by email
@@ -32,6 +32,7 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       email: email.toLowerCase(),
       password,
+      role,
       otp: OTP,
     });
 
