@@ -1,4 +1,4 @@
-function errorHandler (err, req, res) {
+function errorHandler (err ="Server error", res) {
    if(err.status === 500){
        res.status(500).json({status:"fail", message:err.message ||  'Something went wrong!'});
    }
