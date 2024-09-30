@@ -1,9 +1,8 @@
 import mongoose from "mongoose";
 
 const categorySchema = new mongoose.Schema({
-        title:{type:String,required: true,index:true,unique:true},
-        subTitle:{type:String,required: true,index:true},
-        des:{type:String,required: true,index:true}
+        categoryName:{type:String,required: [true," Category Name is required"], index:true},
+        image:{type:String,required: [true, "Image is required"],index:true}
     },
     {versionKey:false,timestamps:true});
 
