@@ -6,7 +6,7 @@ import { generateToken } from '../utils/generateToken.js';
 
 const registerUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
     const subject = 'Email verification';
     const OTP = Math.floor(100000 + Math.random() * 900000)
       .toString()
@@ -14,8 +14,8 @@ const registerUser = async (req, res) => {
     const text = `Your email verification code is ${OTP}`;
 
     // Validate required fields
-    if (!email?.trim() || !password?.trim()) {
-      return res.status(400).json({ message: 'All fields are required' });
+    if ([email, password, role].some((field) => field?.trim() === '')) {
+      throw new ApiError(400, 'All fields are required');
     }
 
     // Check for existing user by email
@@ -32,6 +32,7 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       email: email.toLowerCase(),
       password,
+      role,
       otp: OTP,
     });
 
@@ -98,42 +99,58 @@ const verifyEmail = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  //   find user
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw new ApiError(404, 'User does not exist');
+    //   find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new ApiError(404, 'User does not exist');
+    }
+
+    // Is email verified
+    if (user?.otp !== null) {
+      throw new ApiError(404, 'Email is not verified');
+    }
+
+    //   check is password valid
+    const isPasswordValid = await user.isValidPassword(password);
+    if (!isPasswordValid) {
+      throw new ApiError(401, 'Invalid user credentials');
+    }
+
+    const token = await generateToken(user._id);
+
+    const loggedInUser = await User.findById(user._id).select('-password -otp');
+
+    const option = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    return res
+      .status(200)
+      .cookie('token', token, option)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            user: loggedInUser,
+            token,
+          },
+          'User logged in successfully',
+        ),
+      );
+  } catch (error) {
+    console.error('Error during user login:', error);
+
+    // Return an appropriate error response based on the error type
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: 'An unexpected error occurred during user login' });
   }
-
-  //   check is password valid
-  const isPasswordValid = await user.isValidPassword(password);
-  if (!isPasswordValid) {
-    throw new ApiError(401, 'Invalid user credentials');
-  }
-
-  const token = await generateToken(user._id);
-
-  const loggedInUser = await User.findById(user._id).select('-password -otp');
-
-  const option = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  return res
-    .status(200)
-    .cookie('token', token, option)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          user: loggedInUser,
-          token,
-        },
-        'User logged in successfully',
-      ),
-    );
 };
 
 const logoutUser = async (req, res) => {
