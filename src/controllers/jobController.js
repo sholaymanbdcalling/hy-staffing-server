@@ -18,12 +18,12 @@ const jobList = async (req, res) => {
 //create a new job post
 const createJob = async (req, res) => {
   try {
-    const { role, userId } = req.user;
+    const { role, _id} = req.user;
     if (role !== "Company") {
       throw new Error(401, "Unauthorized!");
     }
     let reqBody = req.body;
-    reqBody.userId = userId;
+    reqBody.userId = _id;
     await Job.create(reqBody);
     res.status(201).json(new ApiResponse(201, "Created successfully!"));
   } catch (e) {

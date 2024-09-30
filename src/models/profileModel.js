@@ -28,10 +28,15 @@ const profileSchema = new mongoose.Schema(
       required: [true, "Message is required"],
       index: true,
     },
-    userID: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: [true, "userID is required"],
+      required: [true, "userId is required"],
       index: true,
+    },
+    status: {
+      type: String,
+      required: [true, "Status is required"],
+      default: "Pending",
     },
   },
   { versionKey: false, timestamps: true }
