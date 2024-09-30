@@ -1,7 +1,7 @@
 import express from 'express';
 import { loginUser, logoutUser, registerUser, verifyEmail } from '../controllers/userController.js';
 import { verifyJWT } from '../middlewares/authVerifyMiddleware.js';
-import { createJob, jobList, removeJob, singleJob, updateJob } from '../controllers/jobController.js';
+import { createJob, filterJob, jobList, removeJob, searchByKeyword, singleJob, updateJob } from '../controllers/jobController.js';
 
 const router = express.Router();
 
@@ -19,6 +19,8 @@ router.post('/createJob',verifyJWT, createJob);
 router.delete('/removeJob/:id',verifyJWT , removeJob);
 router.get('/singleJob/:id',verifyJWT,singleJob);
 router.put('/updateJob/:id',verifyJWT,updateJob);
+router.get('/searchByKeyword/:keyword' , searchByKeyword);
+router.post('/filterJob',filterJob);
 
 
 export default router;
