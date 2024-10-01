@@ -11,9 +11,7 @@ const createSuccessStory = async (req, res) => {
     reqBody.userId = _id;
     if (role === "user") {
       await SuccessStories.create(reqBody);
-      res.status(200).json(new ApiResponse(200, "Success Story Created"));
-    } else {
-      throw new Error(401, "unauthorized");
+      res.status(201).json(new ApiResponse(201, "Success Story Created"));
     }
   } catch (e) {
     errorHandler(e, res);

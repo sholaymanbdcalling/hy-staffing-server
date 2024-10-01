@@ -11,7 +11,7 @@ const createProfile = async (req, res) => {
     let userCount = await Profile.findOne({ userId: _id });
     if (userCount === null) {
       await Profile.create(reqBody);
-      return res.status(200).json(new ApiResponse(201, "Profile Created!"));
+      return res.status(201).json(new ApiResponse(201, "Profile Created!"));
     } else {
       let data = await Profile.updateOne(
         { userId: _id },

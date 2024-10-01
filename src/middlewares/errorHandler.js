@@ -14,8 +14,11 @@ function errorHandler (err ="Server error", res) {
    else if (err.status === 503){
     return  res.status(503).json({status:"fail", message:err.message ||  'Something went wrong!'});
    }
+   else if (err.status === 401){
+      return  res.status(401).json({status:"fail", message:err.message ||  'unauthorized!'});
+     }
    else {
-    return  res.status(400).json({status:"fail", message:err.message});
+    return  res.status(400).json({status:"fail", message:err.message ||  'Something went wrong!'});
    }
 }
 
