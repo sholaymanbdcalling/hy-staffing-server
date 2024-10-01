@@ -19,13 +19,13 @@ const jobList = async (req, res) => {
 const createJob = async (req, res) => {
   try {
     const { role, _id} = req.user;
-    if (role !== "Company") {
-      throw new Error(401, "Unauthorized!");
+    if (role !== "company") {
+      throw new Error(401, "unauthorized!");
     }
     let reqBody = req.body;
     reqBody.userId = _id;
     await Job.create(reqBody);
-    res.status(201).json(new ApiResponse(201, "Created successfully!"));
+    res.status(201).json(new ApiResponse(201, "created successfully!"));
   } catch (e) {
     errorHandler(e, res);
   }
@@ -35,8 +35,8 @@ const createJob = async (req, res) => {
 const removeJob = async (req, res) => {
   try {
     const { role } = req.user;
-    if (role === "User") {
-      throw new Error(401, "Unauthorized!");
+    if (role === "user") {
+      throw new Error(401, "unauthorized!");
     }
     let id = req.params.id;
     let data = await Job.deleteOne({ _id: id });
@@ -54,8 +54,8 @@ const removeJob = async (req, res) => {
 const singleJob = async (req, res) => {
   try {
     const { role } = req.user;
-    if (role === "User") {
-      throw new Error(401, "Unauthorized!");
+    if (role === "user") {
+      throw new Error(401, "unauthorized!");
     }
     let id = req.params.id;
     let data = await Job.findOne({ _id: id });
@@ -69,8 +69,8 @@ const singleJob = async (req, res) => {
 const updateJob = async (req, res) => {
   try {
     const { role } = req.user;
-    if (role === "User") {
-      throw new Error(401, "Unauthorized!");
+    if (role === "user") {
+      throw new Error(401, "unauthorized!");
     }
     let id = req.params.id;
     let reqBody = req.body;

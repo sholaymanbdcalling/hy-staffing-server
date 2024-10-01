@@ -1,6 +1,5 @@
 import express from 'express';
 const app = new express();
-import mongoose from 'mongoose';
 import router from './src/router/api.js';
 
 //middlewares
@@ -9,6 +8,7 @@ import hpp from 'hpp';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -24,6 +24,7 @@ app.use(hpp());
 app.use(helmet());
 app.use(mongoSanitize());
 app.use(limiter);
+app.use(cookieParser());
 
 //route connect
 app.use('/api/v1', router);

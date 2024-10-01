@@ -35,8 +35,8 @@ const profileList = async (req, res) => {
   try {
     const { role, _id } = req.user;
     const userCount = await Profile.findOne({ userId: _id });
-    if (role === "User" && !userCount) {
-      throw new Error(401, "UnAuthorized!");
+    if (role === "user" && !userCount) {
+      throw new Error(401, "unauthorized!");
     }
     let data = await Profile.aggregate([
       {
@@ -72,7 +72,7 @@ const updateStatus = async (req, res) => {
     let id = req.params.id;
     let status = req.params.status;
     let userCount = await Profile.findOne({ userId: _id });
-    if (role === "Company" && userCount) {
+    if (role === "company" && userCount) {
       let data = await Profile.updateOne(
         { _id: id },
         { $set: { status: status } }
@@ -81,7 +81,7 @@ const updateStatus = async (req, res) => {
         res.status(200).json(new ApiResponse(200, "Status updated!"));
       }
     } else {
-      throw new Error(401, "Unauthorized");
+      throw new Error(401, "unauthorized");
     }
   } catch (e) {
     errorHandler(e, res);
@@ -93,13 +93,13 @@ const removeProfile = async (req, res) => {
     let { role, _id } = req.user;
     let id = req.params.id;
     let userCount = await Profile.findOne({ userId: _id });
-    if (role === "Company" && userCount) {
+    if (role === "company" && userCount) {
       let data = await Profile.deleteOne({ _id: id });
       if (data.deletedCount === 1) {
         res.status(200).json(new ApiResponse(200, "Profile Removed"));
       }
     } else {
-      throw new Error(401, "Unauthorized");
+      throw new Error(401, "unauthorized");
     }
   } catch (e) {
     errorHandler(e, res);
@@ -111,11 +111,11 @@ const profileDetails = async (req, res) => {
     let { role, _id } = req.user;
     let id = req.params.id;
     let userCount = await Profile.findOne({ userId: _id });
-    if (role === "Company" && userCount) {
+    if (role === "company" && userCount) {
       let data = await Profile.findOne({ _id: id });
       res.status(200).json(new ApiResponse(200, data));
     } else {
-      throw new Error(401, "Unauthorized");
+      throw new Error(401, "unauthorized");
     }
   } catch (e) {
     errorHandler(e,res);
