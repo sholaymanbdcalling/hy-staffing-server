@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, logoutUser, registerUser, verifyEmail } from '../controllers/userController.js';
+import { deleteUserAccount, loginUser, logoutUser, registerUser, removeUser, updateRole, userList, verifyEmail } from '../controllers/userController.js';
 import { verifyJWT } from '../middlewares/authVerifyMiddleware.js';
 import { createJob, filterJob, jobList, listByCategory, removeJob, searchByKeyword, singleJob, updateJob } from '../controllers/jobController.js';
 import { createProfile, profileDetails, profileList, removeProfile, updateStatus } from '../controllers/profileController.js';
@@ -13,12 +13,17 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/verify-otp', verifyEmail);
 router.post('/login', loginUser);
+
 // private route
 router.post('/logout', verifyJWT, logoutUser);
+router.get('/userList/:pageNo/:perPage',verifyJWT,userList);
+router.delete('/removeUser/:id',verifyJWT,removeUser);
+router.delete('/deleteUserAccount',verifyJWT,deleteUserAccount);
+router.put('/updateRole/:id/:role',verifyJWT,updateRole);
 
 
 //Job router
-router.get('/jobList', jobList);
+router.get('/jobList/:pageNo/:perPage', jobList);
 router.post('/createJob',verifyJWT, createJob);
 router.delete('/removeJob/:id',verifyJWT , removeJob);
 router.get('/singleJob/:id',verifyJWT,singleJob);
@@ -30,7 +35,7 @@ router.get('/listByCategory/:id',verifyJWT,listByCategory)
 
 //profile router
 router.post('/createProfile',verifyJWT,createProfile);
-router.get('/profileList',verifyJWT,profileList);
+router.get('/profileList/:pageNo/:perPage',verifyJWT,profileList);
 router.put('/updateStatus/:id/:status',verifyJWT,updateStatus);
 router.delete('/removeProfile/:id',verifyJWT,removeProfile);
 router.get('/profileDetails/:id', verifyJWT,profileDetails);
