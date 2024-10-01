@@ -33,12 +33,22 @@ const createProfile = async (req, res) => {
 
 const profileList = async (req, res) => {
   try {
+    let pageNo = Number(req.params.pageNo);
+    let perPage = Number(req.params.perPage);
+    let skipRow = (pageNo - 1) * perPage;
+    let matchStage = { $match: {} };
+    let skipStage = { $skip: skipRow };
+    let limitStage = { $limit: perPage };
+    let countStage ={$count:"total"};
     const { role, _id } = req.user;
     const userCount = await Profile.findOne({ userId: _id });
     if (role === "user" && !userCount) {
       throw new Error(401, "unauthorized!");
     }
     let data = await Profile.aggregate([
+      matchStage,
+      skipStage,
+      limitStage,
       {
         $addFields: {
           sortOrder: {
@@ -60,7 +70,8 @@ const profileList = async (req, res) => {
         $project: { sortOrder: 0 }, // Remove the sortOrder field from the output
       },
     ]);
-    res.status(200).json(new ApiResponse(200, data));
+    let totalCount = await Profile.aggregate([matchStage,countStage]);
+    res.status(200).json(new ApiResponse(200, {data,totalCount}));
   } catch (e) {
     errorHandler(e, res);
   }
@@ -118,10 +129,14 @@ const profileDetails = async (req, res) => {
       throw new Error(401, "unauthorized");
     }
   } catch (e) {
-    errorHandler(e,res);
+    errorHandler(e, res);
   }
 };
 
-
-
-export { createProfile, profileList, updateStatus, removeProfile,profileDetails };
+export {
+  createProfile,
+  profileList,
+  updateStatus,
+  removeProfile,
+  profileDetails,
+};

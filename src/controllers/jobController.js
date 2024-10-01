@@ -9,8 +9,16 @@ const { ObjectId } = mongoose.Types;
 //find all job post
 const jobList = async (req, res) => {
   try {
-    let data = await Job.find();
-    res.status(200).json(new ApiResponse(200, data));
+    let pageNo = Number(req.params.pageNo);
+    let perPage = Number(req.params.perPage);
+    let skipRow = (pageNo-1)*perPage;
+    let matchStage = {$match:{}}
+    let skipStage={$skip:skipRow};
+    let limitStage = {$limit:perPage};
+    let countStage ={$count:"total"};
+    let data = await Job.aggregate([matchStage,skipStage,limitStage]);
+    let totalCount = await Job.aggregate([matchStage,countStage]);
+    res.status(200).json(new ApiResponse(200, {data,totalCount}));
   } catch (e) {
     errorHandler(e, res);
   }
