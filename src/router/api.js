@@ -3,6 +3,7 @@ import { loginUser, logoutUser, registerUser, verifyEmail } from '../controllers
 import { verifyJWT } from '../middlewares/authVerifyMiddleware.js';
 import { createJob, filterJob, jobList, removeJob, searchByKeyword, singleJob, updateJob } from '../controllers/jobController.js';
 import { createProfile, profileDetails, profileList, removeProfile, updateStatus } from '../controllers/profileController.js';
+import { createSuccessStory, removeStory, storyList, updateStory, userStories } from '../controllers/successStoryController.js';
 
 const router = express.Router();
 
@@ -30,6 +31,15 @@ router.get('/profileList',verifyJWT,profileList);
 router.put('/updateStatus/:id/:status',verifyJWT,updateStatus);
 router.delete('/removeProfile/:id',verifyJWT,removeProfile);
 router.get('/profileDetails/:id', verifyJWT,profileDetails);
+
+
+//story routes
+router.post('/createSuccessStory',verifyJWT , createSuccessStory);
+router.get('/storyList' , storyList);
+router.delete('/removeStory/:id', verifyJWT , removeStory);
+router.get('/userStories',verifyJWT,userStories);
+router.put('/updateStory/:id',verifyJWT,updateStory);
+
 
 
 export default router;
