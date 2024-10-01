@@ -5,6 +5,7 @@ import { createJob, filterJob, jobList, listByCategory, removeJob, searchByKeywo
 import { createProfile, profileDetails, profileList, removeProfile, updateStatus } from '../controllers/profileController.js';
 import { createSuccessStory, removeStory, storyList, updateStory, userStories } from '../controllers/successStoryController.js';
 import { categoryList, createCategory, removeCategory, updateCategory } from '../controllers/categoryController.js';
+import { createTool, toolByType, updateTool } from '../controllers/toolController.js';
 
 const router = express.Router();
 
@@ -47,5 +48,10 @@ router.get('/categoryList' , categoryList);
 router.post('/createCategory' , verifyJWT , createCategory);
 router.delete('/removeCategory/:id',verifyJWT,removeCategory);
 router.put('/updateCategory/:id',verifyJWT,updateCategory);
+
+//tool routes
+router.post('/createTool' , verifyJWT , createTool);
+router.put('/updateTool/:id' , verifyJWT , updateTool);
+router.get('/toolByType/:type',toolByType);
 
 export default router;

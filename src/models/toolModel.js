@@ -14,6 +14,11 @@ const toolSchema = new mongoose.Schema(
       index: true,
     },
     des: { type: String, required: [true, "Des is required"], index: true },
+    toolType: {
+      type: String,
+      required: [true, "Tool Type is required"],
+      index: true,
+    },
   },
   { versionKey: false, timestamps: true }
 );
