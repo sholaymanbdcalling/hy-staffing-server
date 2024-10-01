@@ -3,6 +3,7 @@ import Job from "../models/jobModel.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import searchQuery from "../utils/searchQuery.js";
+import Category from "../models/categoryModel.js";
 const { ObjectId } = mongoose.Types;
 
 //find all job post
@@ -109,6 +110,7 @@ const searchByKeyword = async (req, res) => {
   }
 };
 
+//filter job on the basis of location,keyword,category and type
 const filterJob = async (req, res) => {
   try {
     let data ;
@@ -139,6 +141,19 @@ const filterJob = async (req, res) => {
   }
 };
 
+
+//job list by category
+const listByCategory = async(req,res)=>{
+  try{
+   let categoryId = new ObjectId(req.params.id);
+   let data = await Job.aggregate([{$match:{categoryId:categoryId}}]);
+   res.status(200).json(new ApiResponse(200, data));
+  }
+  catch(e){
+  errorHandler(e,res);
+  }
+}
+
 export {
   jobList,
   createJob,
@@ -147,4 +162,5 @@ export {
   updateJob,
   searchByKeyword,
   filterJob,
+  listByCategory
 };
