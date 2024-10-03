@@ -190,7 +190,8 @@ const userList = async (req, res) => {
       let skipStage = { $skip: skipRow };
       let limitStage = { $limit: perPage };
       let countStage = { $count: "total" };
-      let data = await User.aggregate([matchStage, skipStage, limitStage]);
+      let projectStage ={$project:{password:0,otp:0}};
+      let data = await User.aggregate([matchStage, skipStage, limitStage,projectStage]);
       let totalCount = await User.aggregate([matchStage, countStage]);
       res.status(200).json(new ApiResponse(200, { data, totalCount }));
     }
@@ -198,6 +199,22 @@ const userList = async (req, res) => {
     errorHandler(e, res);
   }
 };
+
+//user info
+const userInfo = async(req,res)=>{
+  try{
+   const {_id} = req.user;
+   let matchStage = {$match:{_id:_id}};
+   let joinWithProfileStage = {$lookup:{from:"profiles",localField:"_id",foreignField:"userId",as:"profile"}};
+   let unwindJoin = {$unwind:"$profile"};
+   let projectStage = {$project:{password:0,role:0,"profile?.subject":0,"profile?.message":0,"profile?.file":0}};
+   let data = await User.aggregate([matchStage,joinWithProfileStage,unwindJoin,projectStage]);
+   res.status(200).json(new ApiResponse(200, data));
+  }
+  catch(e){
+   errorHandler(e,res);
+  }
+}
 
 //remove a user
 const removeUser = async (req, res) => {
@@ -247,6 +264,8 @@ const updateRole = async(req,res)=>{
   }
 }
 
+
+
 export {
   registerUser,
   verifyEmail,
@@ -255,5 +274,6 @@ export {
   userList,
   removeUser,
   deleteUserAccount,
-  updateRole
+  updateRole,
+  userInfo
 };

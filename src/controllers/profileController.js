@@ -39,7 +39,7 @@ const profileList = async (req, res) => {
     let matchStage = { $match: {} };
     let skipStage = { $skip: skipRow };
     let limitStage = { $limit: perPage };
-    let countStage ={$count:"total"};
+    let countStage = { $count: "total" };
     const { role, _id } = req.user;
     const userCount = await Profile.findOne({ userId: _id });
     if (role === "user" && !userCount) {
@@ -70,8 +70,8 @@ const profileList = async (req, res) => {
         $project: { sortOrder: 0 }, // Remove the sortOrder field from the output
       },
     ]);
-    let totalCount = await Profile.aggregate([matchStage,countStage]);
-    res.status(200).json(new ApiResponse(200, {data,totalCount}));
+    let totalCount = await Profile.aggregate([matchStage, countStage]);
+    res.status(200).json(new ApiResponse(200, { data, totalCount }));
   } catch (e) {
     errorHandler(e, res);
   }
@@ -133,10 +133,31 @@ const profileDetails = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { _id } = req.user;
+    const {avatar,bio} = req.body;
+    const updatedProfile = await Profile.updateOne(
+      { userId: _id },
+      { $set: { avatar, bio } }
+    );
+
+    // Check if the update was successful
+    if (updatedProfile.nModified === 0) {
+      return res.status(404).json({ message: "Profile not found or not updated" });
+    }
+
+    res.status(200).json(new ApiResponse(200, "Profile updated successfully!"));
+  } catch (e) {
+    errorHandler(e, res);
+  }
+};
+
 export {
   createProfile,
   profileList,
   updateStatus,
   removeProfile,
   profileDetails,
+  updateProfile
 };
