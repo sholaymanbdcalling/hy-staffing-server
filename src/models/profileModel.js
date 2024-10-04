@@ -37,6 +37,16 @@ const profileSchema = new mongoose.Schema(
       type: String,
       required: [true, "Status is required"],
       default: "Pending",
+      index:true
+    },
+    bio: {
+      type: String,
+      default: "Hi, I am a new Member",
+      index:true
+    },
+    avatar: {
+      type: String,
+      index:true
     },
   },
   { versionKey: false, timestamps: true }
