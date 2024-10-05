@@ -18,8 +18,8 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin' , 'company'],
-      default:'user'
+      enum: ['user', 'admin', 'company', 'super admin', 'moderator'],
+      default: 'user',
     },
     otp: {
       type: Number,

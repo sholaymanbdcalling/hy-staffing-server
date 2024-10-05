@@ -42,6 +42,8 @@ import {
   updateCategory,
 } from '../controllers/categoryController.js';
 import { createTool, toolByType, updateTool } from '../controllers/toolController.js';
+import { upload } from '../middlewares/multerMiddleware.js';
+import { updateLogo } from '../controllers/logoController.js';
 
 const router = express.Router();
 
@@ -92,5 +94,22 @@ router.put('/updateCategory/:id', verifyJWT, updateCategory);
 router.post('/createTool', verifyJWT, createTool);
 router.put('/updateTool/:id', verifyJWT, updateTool);
 router.get('/toolByType/:type', toolByType);
+
+// logo routes
+router.post(
+  '/updateLogo',
+  verifyJWT,
+  upload.fields([
+    {
+      name: 'whiteLogo',
+      maxCount: 1,
+    },
+    {
+      name: 'blackLogo',
+      maxCount: 1,
+    },
+  ]),
+  updateLogo,
+);
 
 export default router;
