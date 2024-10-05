@@ -44,6 +44,7 @@ import {
 import { createTool, toolByType, updateTool } from '../controllers/toolController.js';
 import { upload } from '../middlewares/multerMiddleware.js';
 import { updateLogo } from '../controllers/logoController.js';
+import { upsertHero } from '../controllers/heroController.js';
 
 const router = express.Router();
 
@@ -110,6 +111,18 @@ router.post(
     },
   ]),
   updateLogo,
+);
+
+// hero routes
+router.post(
+  '/updateHero',
+  verifyJWT,
+  upload.fields([
+    { name: homePageImage, maxCount: 1 },
+    { name: servicePageImage, maxCount: 1 },
+    { name: jobListPageImage, maxCount: 1 },
+  ]),
+  upsertHero,
 );
 
 export default router;
