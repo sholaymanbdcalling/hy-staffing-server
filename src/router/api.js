@@ -41,6 +41,11 @@ import {
   createCategory,
   removeCategory,
   updateCategory,
+} from '../controllers/categoryController.js';
+import { createTool, toolByType, updateTool } from '../controllers/toolController.js';
+import { upload } from '../middlewares/multerMiddleware.js';
+import { updateLogo } from '../controllers/logoController.js';
+import { upsertHero } from '../controllers/heroController.js';
 } from "../controllers/categoryController.js";
 import {
   createTool,
@@ -98,5 +103,34 @@ router.put("/updateCategory/:id", verifyJWT, updateCategory);
 router.post("/createTool", verifyJWT, createTool);
 router.put("/updateTool/:id", verifyJWT, updateTool);
 router.get("/toolByType/:type", toolByType);
+
+// logo routes
+router.post(
+  '/updateLogo',
+  verifyJWT,
+  upload.fields([
+    {
+      name: 'whiteLogo',
+      maxCount: 1,
+    },
+    {
+      name: 'blackLogo',
+      maxCount: 1,
+    },
+  ]),
+  updateLogo,
+);
+
+// hero routes
+router.post(
+  '/updateHero',
+  verifyJWT,
+  upload.fields([
+    { name: homePageImage, maxCount: 1 },
+    { name: servicePageImage, maxCount: 1 },
+    { name: jobListPageImage, maxCount: 1 },
+  ]),
+  upsertHero,
+);
 
 export default router;
