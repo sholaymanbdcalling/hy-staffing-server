@@ -4,6 +4,21 @@ import bcrypt from 'bcrypt';
 
 const userSchema = new Schema(
   {
+    firstName: {
+      type: String,
+      required: [true, 'First Name is required'],
+      index: true,
+    },
+    lastName: {
+      type: String,
+      required: [true, 'Last Name is required'],
+      index: true,
+    },
+    mobile: {
+      type: String,
+      required: [true, 'Mobile is required'],
+      index: true,
+    },
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -15,6 +30,11 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin', 'company', 'super admin', 'moderator'],
+      default: 'user',
     },
     otp: {
       type: Number,
@@ -47,8 +67,11 @@ userSchema.methods.isValidPassword = async function (password) {
 userSchema.methods.generateAccessToken = async function () {
   return jwt.sign(
     {
-      _id: this._id,
+      userId: this._id,
+      firstName: this.firstName,
+      lastName: this.lastName,
       email: this.email,
+      role: this.role,
     },
     process.env.TOKEN_SECRET,
     { expiresIn: process.env.TOKEN_EXPIRY },
