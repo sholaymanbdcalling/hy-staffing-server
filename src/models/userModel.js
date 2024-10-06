@@ -4,6 +4,21 @@ import bcrypt from 'bcrypt';
 
 const userSchema = new Schema(
   {
+    firstName: {
+      type: String,
+      required: [true, 'First Name is required'],
+      index: true,
+    },
+    lastName: {
+      type: String,
+      required: [true, 'Last Name is required'],
+      index: true,
+    },
+    mobile: {
+      type: String,
+      required: [true, 'Mobile is required'],
+      index: true,
+    },
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -53,6 +68,8 @@ userSchema.methods.generateAccessToken = async function () {
   return jwt.sign(
     {
       userId: this._id,
+      firstName: this.firstName,
+      lastName: this.lastName,
       email: this.email,
       role: this.role,
     },
