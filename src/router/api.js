@@ -1,52 +1,52 @@
 import express from "express";
 import {
-  changePassword,
-  deleteUserAccount,
-  loginUser,
-  logoutUser,
-  registerUser,
-  removeUser,
-  updateRole,
-  userInfo,
-  userList,
-  verifyEmail,
+    changePassword,
+    deleteUserAccount,
+    loginUser,
+    logoutUser,
+    registerUser,
+    removeUser,
+    updateRole,
+    userInfo,
+    userList,
+    verifyEmail,
 } from "../controllers/userController.js";
-import { verifyJWT } from "../middlewares/authVerifyMiddleware.js";
+import {verifyJWT} from "../middlewares/authVerifyMiddleware.js";
 import {
-  createJob,
-  filterJob,
-  jobList,
-  listByCategory,
-  removeJob,
-  searchByKeyword,
-  singleJob,
-  updateJob,
+    createJob,
+    filterJob,
+    jobList,
+    listByCategory,
+    removeJob,
+    searchByKeyword,
+    singleJob,
+    updateJob,
 } from "../controllers/jobController.js";
 import {
-  createProfile,
-  profileDetails,
-  profileList,
-  removeProfile,
-  updateProfile,
-  updateStatus,
+    createProfile,
+    profileDetails,
+    profileList,
+    removeProfile,
+    updateProfile,
+    updateStatus,
 } from "../controllers/profileController.js";
 import {
-  createSuccessStory,
-  removeStory,
-  storyList,
-  updateStory,
-  userStories,
+    createSuccessStory,
+    removeStory,
+    storyList,
+    updateStory,
+    userStories,
 } from "../controllers/successStoryController.js";
 import {
-  categoryList,
-  createCategory,
-  removeCategory,
-  updateCategory,
+    categoryList,
+    createCategory,
+    removeCategory,
+    updateCategory,
 } from "../controllers/categoryController.js";
 import {
-  createTool,
-  toolByType,
-  updateTool,
+    createTool,
+    toolByType,
+    updateTool,
 } from "../controllers/toolController.js";
 
 const router = express.Router();
@@ -64,7 +64,7 @@ router.delete("/removeUser/:id", verifyJWT, removeUser);
 router.delete("/deleteUserAccount", verifyJWT, deleteUserAccount);
 router.put("/updateRole/:id/:role", verifyJWT, updateRole);
 router.get("/userInfo", verifyJWT, userInfo);
-router.put('/updateProfile',verifyJWT,updateProfile);
+router.put('/updateProfile', verifyJWT, updateProfile);
 
 //Job router
 router.get("/jobList/:pageNo/:perPage", jobList);
