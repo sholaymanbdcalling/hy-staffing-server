@@ -24,8 +24,8 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ extended: true , limit: '5mb'}));
+app.use(express.urlencoded({ extended: true , limit: '5mb'}));
 app.use(hpp());
 app.use(helmet());
 app.use(mongoSanitize());

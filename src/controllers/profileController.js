@@ -137,15 +137,18 @@ const updateProfile = async (req, res) => {
   try {
     const { _id } = req.user;
     const {avatar,bio} = req.body;
-    const updatedProfile = await Profile.updateOne(
-      { userId: _id },
-      { $set: { avatar, bio } }
-    );
 
-    // Check if the update was successful
-    if (updatedProfile.nModified === 0) {
-      return res.status(404).json({ message: "Profile not found or not updated" });
+    let updateFields = {};
+
+    if (bio !== undefined) {
+      updateFields.bio = bio; // Only update if bio is present
     }
+
+    if (req.body.avatar) {
+      updateFields.avatar = avatar; // Assuming you're handling the image upload via multer
+    }
+
+    await Profile.updateOne({userId:_id},updateFields,{new:true});
 
     res.status(200).json(new ApiResponse(200, "Profile updated successfully!"));
   } catch (e) {
