@@ -45,7 +45,7 @@ const registerUser = async (req, res) => {
       return res.status(500).json({ message: 'Something went wrong when registering the user' });
     }
 
-    return res.status(200).json(new ApiResponse(200, createdUser, 'success'));
+    return res.status(201).json(new ApiResponse(201, createdUser, 'success'));
   } catch (error) {
     console.error('Error during user registration:', error);
 
@@ -227,8 +227,10 @@ const userList = async (req, res) => {
       let matchStage = { $match: {} };
       let skipStage = { $skip: skipRow };
       let limitStage = { $limit: perPage };
+      let joinWithProfileStage = {$lookup:{from:"profiles",localField:"_id",foreignField:"userId",as:"profile"}};
+      let unwindJoin = {$unwind:"$profile"};
       let projectStage ={$project:{password:0,otp:0}};
-      let data = await User.aggregate([matchStage, skipStage, limitStage,projectStage]);
+      let data = await User.aggregate([matchStage, skipStage, limitStage,joinWithProfileStage,unwindJoin,projectStage]);
       let countStage = { $count: 'total' };
       let totalCount = await User.aggregate([matchStage, countStage]);
       res.status(200).json(new ApiResponse(200, { data, totalCount }));
@@ -245,7 +247,7 @@ const userInfo = async(req,res)=>{
    let matchStage = {$match:{_id:_id}};
    let joinWithProfileStage = {$lookup:{from:"profiles",localField:"_id",foreignField:"userId",as:"profile"}};
    let unwindJoin = {$unwind:"$profile"};
-   let projectStage = {$project:{password:0,role:0,"profile?.subject":0,"profile?.message":0,"profile?.file":0}};
+   let projectStage = {$project:{password:0,"profile?.subject":0,"profile?.message":0,"profile?.file":0}};
    let data = await User.aggregate([matchStage,joinWithProfileStage,unwindJoin,projectStage]);
    res.status(200).json(new ApiResponse(200, data));
   }

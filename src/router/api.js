@@ -27,6 +27,7 @@ import {
   profileDetails,
   profileList,
   removeProfile,
+  updateProfile,
   updateStatus,
 } from "../controllers/profileController.js";
 import {
@@ -63,6 +64,7 @@ router.delete("/removeUser/:id", verifyJWT, removeUser);
 router.delete("/deleteUserAccount", verifyJWT, deleteUserAccount);
 router.put("/updateRole/:id/:role", verifyJWT, updateRole);
 router.get("/userInfo", verifyJWT, userInfo);
+router.put('/updateProfile',verifyJWT,updateProfile);
 
 //Job router
 router.get("/jobList/:pageNo/:perPage", jobList);
