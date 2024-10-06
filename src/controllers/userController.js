@@ -8,7 +8,7 @@ import errorHandler from '../middlewares/errorHandler.js';
 // register a user controller
 const registerUser = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { firstName, lastName, mobile, email, password, role } = req.body;
     const subject = 'Email verification';
     const OTP = Math.floor(100000 + Math.random() * 900000)
       .toString()
@@ -16,7 +16,9 @@ const registerUser = async (req, res) => {
     const text = `Your email verification code is ${OTP}`;
 
     // Validate required fields
-    if ([email, password, role].some((field) => field?.trim() === '')) {
+    if (
+      [firstName, lastName, mobile, email, password, role].some((field) => field?.trim() === '')
+    ) {
       throw new ApiError(400, 'All fields are required');
     }
 
@@ -32,6 +34,9 @@ const registerUser = async (req, res) => {
 
     // Create the user
     const user = await User.create({
+      firstName,
+      lastName,
+      mobile,
       email: email.toLowerCase(),
       password,
       role,
@@ -135,6 +140,9 @@ const loginUser = async (req, res) => {
     return res
       .status(200)
       .cookie('token', token, option)
+      .cookie('firstName', user.firstName, option)
+      .cookie('lastName', user.lastName, option)
+      .cookie('email', user.email, option)
       .json(
         new ApiResponse(
           200,
@@ -167,6 +175,9 @@ const logoutUser = async (req, res) => {
   return res
     .status(200)
     .clearCookie('token', option)
+    .clearCookie('firstName', option)
+    .clearCookie('lastName', option)
+    .clearCookie('email', option)
     .json(new ApiResponse(200, {}, 'User logged out successfully'));
 };
 
@@ -227,6 +238,7 @@ const userList = async (req, res) => {
       let matchStage = { $match: {} };
       let skipStage = { $skip: skipRow };
       let limitStage = { $limit: perPage };
+
       let joinWithProfileStage = {$lookup:{from:"profiles",localField:"_id",foreignField:"userId",as:"profile"}};
       let unwindJoin = {$unwind:"$profile"};
       let projectStage ={$project:{password:0,otp:0}};
@@ -254,7 +266,7 @@ const userInfo = async(req,res)=>{
   catch(e){
    errorHandler(e,res);
   }
-}
+};
 
 //remove a user
 const removeUser = async (req, res) => {
@@ -302,8 +314,6 @@ const updateRole = async (req, res) => {
   }
 };
 
-
-
 export {
   registerUser,
   verifyEmail,
@@ -314,5 +324,5 @@ export {
   deleteUserAccount,
   updateRole,
   userInfo,
-  changePassword
+  changePassword,
 };
