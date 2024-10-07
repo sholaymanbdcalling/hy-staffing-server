@@ -89,8 +89,8 @@ router.delete("/removeCategory/:id", verifyJWT, checkRole(["super admin", "admin
 router.put("/updateCategory/:id", verifyJWT, checkRole(["super admin", "admin"]), updateCategory);
 
 //tool routes
-router.post("/createTool", verifyJWT, createTool);
-router.put("/updateTool/:id", verifyJWT, updateTool);
+router.post("/createTool", verifyJWT,checkRole(["super admin", "admin"]), createTool);
+router.put("/updateTool/:id", verifyJWT,checkRole(["super admin", "admin"]), updateTool);
 router.get("/toolByType/:type", toolByType);
 
 export default router;

@@ -5,12 +5,10 @@ import {ApiResponse} from "../utils/ApiResponse.js";
 //create tool
 const createTool = async (req, res) => {
     try {
-        const {role} = req.user;
         let reqBody = req.body;
-        if (role === "admin") {
-            let data = await Tool.create(reqBody);
-            res.status(201).json(new ApiResponse(201, `${data?.title} Created`));
-        }
+        let data = await Tool.create(reqBody);
+        res.status(201).json(new ApiResponse(201, `${data?.title} Created`));
+
     } catch (e) {
         errorHandler(e, res);
     }
@@ -19,15 +17,24 @@ const createTool = async (req, res) => {
 //update tool
 const updateTool = async (req, res) => {
     try {
-        const {role} = req.user;
         const id = req.params.id;
-        let reqBody = req.body;
-        if (role === "admin") {
-            let data = await Tool.updateOne({_id: id}, {$set: reqBody}, {upsert: true});
-            if (data.acknowledged && data.modifiedCount === 1) {
-                res.status(200).json(new ApiResponse(200, `Update successfully`));
-            }
+        let {title, subTitle, des, toolType} = req.body;
+        let updateConditions = {};
+        if (title !== undefined) {
+            updateConditions.title = title;
         }
+        if (subTitle !== undefined) {
+            updateConditions.subTitle = subTitle;
+        }
+        if (des !== undefined) {
+            updateConditions.des = des;
+        }
+        if (toolType !== undefined) {
+            updateConditions.toolType = toolType;
+        }
+        await Tool.updateOne({_id: id}, updateConditions, {new: true});
+        res.status(200).json(new ApiResponse(200, `Update successfully`));
+
     } catch (e) {
         errorHandler(e, res);
     }

@@ -37,20 +37,20 @@ const removeStory = async (req, res) => {
         const id = req.params.id;
         if (role === "user") {
             let removeData = await SuccessStories.deleteOne({_id: id, userId: _id});
-            if (removeData.deletedCount === 1) {
+            if (removeData["deletedCount"] === 1) {
                 res
                     .status(200)
                     .json(new ApiResponse(200, "Your Story Removed Successfully!"));
             }
         } else if (role === "admin") {
             let data = await SuccessStories.deleteOne({_id: id});
-            if (data.deletedCount === 1) {
+            if (data["deletedCount"] === 1) {
                 res
                     .status(200)
                     .json(new ApiResponse(200, "A Story Removed Successfully!"));
             }
         } else {
-            throw new Error(401, "unauthorized!");
+            res.status(403).json({message: "Access denied"});
         }
     } catch (e) {
         errorHandler(e, res);
@@ -60,12 +60,12 @@ const removeStory = async (req, res) => {
 //user story list
 const userStories = async (req, res) => {
     try {
-        let {role, _id} = req.user;
+        const {role, _id} = req.user;
         if (role === "user") {
             let data = await SuccessStories.find({userId: _id});
             res.status(200).json(new ApiResponse(200, data));
         } else {
-            throw new Error(401, "unauthorized!");
+            res.status(403).json({message: "Access denied"});
         }
     } catch (e) {
         errorHandler(e, res);
@@ -77,24 +77,34 @@ const updateStory = async (req, res) => {
     try {
         const {_id, role} = req.user;
         const id = req.params.id;
-        const reqBody = req.body;
+        const {name, designation, comment} = req.body;
         if (role === "user") {
+            let updateConditions = {};
+            if (name !== undefined) {
+                updateConditions.name = name
+            }
+            if (designation !== undefined) {
+                updateConditions.designation = designation;
+            }
+            if (comment !== undefined) {
+                updateConditions.comment = comment;
+            }
             let data = await SuccessStories.updateOne(
                 {_id: id, userId: _id},
-                {$set: reqBody},
-                {upsert: true}
+                updateConditions,
+                {new: true}
             );
             if (
-                data.modifiedCount === 1 &&
-                data.matchedCount === 1 &&
-                data.acknowledged
+                data["modifiedCount"] === 1 &&
+                data["matchedCount"] === 1 &&
+                data["acknowledged"]
             ) {
                 res.status(200).json(new ApiResponse(200, data));
             } else {
-                throw new ApiError(400, "Something went wrong!");
+                res.status(400).json({message: "No story found!"});
             }
         } else {
-            throw new Error(401, "unauthorized");
+            res.status(403).json({message: "Access denied"});
         }
     } catch (e) {
         errorHandler(e, res);
