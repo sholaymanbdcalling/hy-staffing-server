@@ -30,7 +30,7 @@ const createJob = async (req, res) => {
     try {
         const {role, _id} = req.user;
         if (role !== "company") {
-            throw new Error(401, "unauthorized!");
+            res.status(403).json({message: "Access denied"});
         }
         let reqBody = req.body;
         reqBody.userId = _id;
@@ -46,56 +46,58 @@ const removeJob = async (req, res) => {
     try {
         const {role} = req.user;
         if (role === "user") {
-            throw new Error(401, "unauthorized!");
+            res.status(403).json({message: "Access denied"});
         }
         let id = req.params.id;
         let data = await Job.deleteOne({_id: id});
         if (data.deletedCount === 1) {
             res.status(200).json(new ApiResponse(200, "Removed successfully!"));
         } else {
-            throw new Error(400, "Something went wrong!!");
+            res.status(400).json({message: "Not available"});
         }
     } catch (e) {
         errorHandler(e, res);
     }
 };
 
-//find a single Job post
-const singleJob = async (req, res) => {
-    try {
-        const {role} = req.user;
-        if (role === "user") {
-            throw new Error(401, "unauthorized!");
-        }
-        let id = req.params.id;
-        let data = await Job.findOne({_id: id});
-        res.status(200).json(new ApiResponse(200, data));
-    } catch (e) {
-        errorHandler(e, res);
-    }
-};
 
 //updating a job post
 const updateJob = async (req, res) => {
     try {
         const {role} = req.user;
-        if (role === "user") {
-            throw new Error(401, "unauthorized!");
+        if (role !== "company") {
+            res.status(403).json({message: "Access denied"});
+        } else {
+            let id = req.params.id;
+            let {title, company, location, jobType, deadline, experience, categoryId} = req.body;
+            let updateFields = {};
+            if (title !== undefined) {
+                updateFields.title = title
+            }
+            if (company !== undefined) {
+                updateFields.company = company
+            }
+            if (location !== undefined) {
+                updateFields.location = location
+            }
+            if (jobType !== undefined) {
+                updateFields.jobType = jobType
+            }
+            if (deadline !== undefined) {
+                updateFields.deadline = deadline
+            }
+            if (experience !== undefined) {
+                updateFields.experience = experience
+            }
+            if (categoryId !== undefined) {
+                updateFields.categoryId = categoryId
+            }
+            let data = await Job.updateOne({_id: id}, updateFields, {new: true});
+            if (data.acknowledged && data.modifiedCount === 1 && data.matchedCount === 1) {
+                res.status(200).json(new ApiResponse(200, data));
+            }
         }
-        let id = req.params.id;
-        let reqBody = req.body;
-        let data = await Job.updateOne(
-            {_id: id},
-            {$set: reqBody},
-            {upsert: true}
-        );
-        if (
-            data.acknowledged &&
-            data.modifiedCount === 1 &&
-            data.matchedCount === 1
-        ) {
-            res.status(200).json(new ApiResponse(200, data));
-        }
+
     } catch (e) {
         errorHandler(e, res);
     }
@@ -106,14 +108,18 @@ const searchByKeyword = async (req, res) => {
     try {
         const keyword = req.params.keyword;
         let searchData = searchQuery(keyword);
-
         if (searchData.error) {
             return res.status(400).json({message: searchData.error});
         }
-
-        let data = await Job.aggregate([{$match: searchData}]);
-
-        res.status(200).json(new ApiResponse(200, data));
+        let pageNo = Number(req.params.pageNo);
+        let perPage = Number(req.params.perPage);
+        let skipRow = (pageNo - 1) * perPage;
+        let matchStage = {$match: searchData}
+        let skipStage = {$skip: skipRow};
+        let limitStage = {$limit: perPage};
+        let data = await Job.aggregate([matchStage, skipStage, limitStage]);
+        let totalCount = await Job.aggregate([matchStage, {$count: "total"}]);
+        res.status(200).json(new ApiResponse(200, {data, totalCount}));
     } catch (e) {
         errorHandler(e, res);
     }
@@ -140,10 +146,16 @@ const filterJob = async (req, res) => {
         if (location) {
             matchConditions.location = location
         }
-        let matchStage = {$match: matchConditions}
-        data = await Job.aggregate([matchStage]);
-
-        res.status(200).json(new ApiResponse(200, data));
+        let pageNo = Number(req.params.pageNo);
+        let perPage = Number(req.params.perPage);
+        let skipRow = (pageNo - 1) * perPage;
+        let matchStage = {$match: matchConditions};
+        let skipStage = {$skip: skipRow};
+        let limitStage = {$limit: perPage};
+        data = await Job.aggregate([matchStage, skipStage, limitStage]);
+        let countStage = {$count: "total"};
+        let totalCount = await Job.aggregate([matchStage, countStage]);
+        res.status(200).json(new ApiResponse(200, {data, totalCount}));
 
     } catch (e) {
         errorHandler(e, res);
@@ -154,21 +166,22 @@ const filterJob = async (req, res) => {
 //job list by category
 const listByCategory = async (req, res) => {
     try {
+        let pageNo = Number(req.params.pageNo);
+        let perPage = Number(req.params.perPage);
+        let skipRow = (pageNo - 1) * perPage;
         let categoryId = new ObjectId(req.params.id);
-        let data = await Job.aggregate([{$match: {categoryId: categoryId}}]);
-        res.status(200).json(new ApiResponse(200, data));
+        let matchStage = {$match: {categoryId: categoryId}}
+        let skipStage = {$skip: skipRow};
+        let limitStage = {$limit: perPage};
+        let data = await Job.aggregate([matchStage, skipStage, limitStage]);
+        let countStage = {$count: "total"};
+        let totalCount = await Job.aggregate([matchStage, countStage]);
+        res.status(200).json(new ApiResponse(200, {data, totalCount}));
     } catch (e) {
         errorHandler(e, res);
     }
 }
 
 export {
-    jobList,
-    createJob,
-    removeJob,
-    singleJob,
-    updateJob,
-    searchByKeyword,
-    filterJob,
-    listByCategory
+    jobList, createJob, removeJob, updateJob, searchByKeyword, filterJob, listByCategory
 };

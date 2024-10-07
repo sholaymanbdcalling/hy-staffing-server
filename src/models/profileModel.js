@@ -9,7 +9,7 @@ const profileSchema = new mongoose.Schema(
         },
         bio: {
             type: String,
-            default: "Hi, I am a new in HY Staffing",
+            default: "Hi, I am a new member in HY Staffing",
             index: true
         },
         avatar: {
