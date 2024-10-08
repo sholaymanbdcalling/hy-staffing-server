@@ -13,7 +13,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Initialize multer with storage and file filter
-const upload = multer({
+const uploadPdf = multer({
   storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB file size limit
@@ -21,4 +21,4 @@ const upload = multer({
   fileFilter,
 });
 
-export default upload;
+export default uploadPdf;
