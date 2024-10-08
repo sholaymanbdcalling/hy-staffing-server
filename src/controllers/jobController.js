@@ -3,9 +3,9 @@ import Job from "../models/jobModel.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import searchQuery from "../utils/searchQuery.js";
-import Category from "../models/categoryModel.js";
-
+import  City from '../models/cityModel.js'; // Your Mongoose model for cities
 const {ObjectId} = mongoose.Types;
+import Fuse from "fuse.js";
 
 //find all job post
 const jobList = async (req, res) => {
@@ -125,37 +125,75 @@ const searchByKeyword = async (req, res) => {
     }
 };
 
-//filter job on the basis of location,keyword,category and type
+//filtering data on various criteria
 const filterJob = async (req, res) => {
     try {
         let data;
-        const {keyword, categoryId, jobType, location} = req.body;
+        const { keyword, categoryId, jobType, location } = req.body;
         let matchConditions = {};
+        let locationMessage = '';
+
+        // Keyword filtering
         if (keyword) {
-            let searchRegex = {$regex: keyword, $options: "i"};
-            let searchParams = [{title: searchRegex}, {company: searchRegex}];
-            let searchQuery = {$or: searchParams};
-            Object.assign(matchConditions, searchQuery);
+            let searchRegex = { $regex: keyword, $options: "i" };
+            let searchParams = [{ title: searchRegex }, { company: searchRegex }];
+            Object.assign(matchConditions, { $or: searchParams });
         }
+
+        // Category filtering
         if (categoryId) {
-            matchConditions.categoryId = new ObjectId(categoryId)
+            matchConditions.categoryId = new ObjectId(categoryId);
         }
+
+        // Job type filtering
         if (jobType) {
             matchConditions.jobType = jobType;
         }
+
+        // Location filtering with fuzzy matching
         if (location) {
-            matchConditions.location = location
+            if (location.length < 3) {
+                return res.status(400).json({ message: 'Location name must be at least 3 characters long' });
+            }
+
+            // Fetch cities from the database
+            const cities = await City.find({}, { city: 1, _id: 0 });
+            const cityNames = cities.map(city => city.city);
+
+            // Fuse.js setup
+            const options = {
+                includeScore: true,
+                threshold: 0.3, // Lower threshold means stricter matching
+                keys: ['city'] // Specify the field to search
+            };
+            const fuse = new Fuse(cities, options);
+            const results = fuse.search(location);
+
+            if (results.length > 0) {
+                const bestMatch = results[0].item.city;
+                matchConditions.city = { $regex: bestMatch, $options: "i" };
+                locationMessage = `Did you mean '${bestMatch}'?`;
+            } else {
+                locationMessage = `No matching city found for '${location}'.`;
+            }
         }
-        let pageNo = Number(req.params.pageNo);
-        let perPage = Number(req.params.perPage);
-        let skipRow = (pageNo - 1) * perPage;
-        let matchStage = {$match: matchConditions};
-        let skipStage = {$skip: skipRow};
-        let limitStage = {$limit: perPage};
-        data = await Job.aggregate([matchStage, skipStage, limitStage]);
-        let countStage = {$count: "total"};
-        let totalCount = await Job.aggregate([matchStage, countStage]);
-        res.status(200).json(new ApiResponse(200, {data, totalCount}));
+
+        // Debugging logs
+        console.log("Match Conditions:", matchConditions);
+
+        // Get job data
+        data = await Job.aggregate([{ $match: matchConditions }]);
+        console.log("Jobs Found:", data);
+
+        // If no jobs matched, remove the city condition and retry
+        if (data.length === 0) {
+            delete matchConditions.city; // Remove city filter
+            data = await Job.aggregate([{ $match: matchConditions }]);
+            console.log("Jobs Found After Removing City Filter:", data);
+        }
+
+        // Send the response
+        res.status(200).json(new ApiResponse(200, { data, totalCount: data.length, locationMessage }));
 
     } catch (e) {
         errorHandler(e, res);
