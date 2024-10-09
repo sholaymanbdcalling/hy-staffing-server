@@ -37,7 +37,10 @@ import { createTool, toolByType, updateTool } from '../controllers/toolControlle
 import { checkRole } from '../middlewares/checkRole.js';
 import { verifyJWT } from '../middlewares/authVerifyMiddleware.js';
 import uploadPdf from '../utils/FileUpload/multer.js';
-import { createApplication } from '../controllers/applicationController.js';
+import {
+  createApplication,
+  updateApplicationStatus,
+} from '../controllers/applicationController.js';
 import { upsertHero } from '../controllers/heroController.js';
 import { updateLogo } from '../controllers/logoController.js';
 import { upload } from '../middlewares/multerMiddleware.js';
@@ -77,7 +80,7 @@ router.get('/searchByKeyword/:pageNo/:perPage/:keyword', searchByKeyword);
 router.post('/filterJob/:pageNo/:perPage', filterJob);
 router.get('/listByCategory/:pageNo/:perPage/:id', verifyJWT, listByCategory);
 router.post('/application', verifyJWT, uploadPdf.single('file'), createApplication);
-
+router.post('/update/application/status/:id', verifyJWT, updateApplicationStatus);
 
 //profile router
 router.post('/saveProfile', verifyJWT, saveProfile);
@@ -107,7 +110,6 @@ router.post('/createTool', verifyJWT, checkRole(['super admin', 'admin']), creat
 router.put('/updateTool/:id', verifyJWT, checkRole(['super admin', 'admin']), updateTool);
 router.get('/toolByType/:type', toolByType);
 
-
 // logo routes
 router.post(
   '/updateLogo',
@@ -136,6 +138,5 @@ router.post(
   ]),
   upsertHero,
 );
-
 
 export default router;
