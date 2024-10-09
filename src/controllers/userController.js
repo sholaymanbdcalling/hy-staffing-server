@@ -134,8 +134,8 @@ const loginUser = async (req, res) => {
     const loggedInUser = await User.findById(user._id).select('-password -otp');
 
     const option = {
-      httpOnly: true,
-      secure: true,
+      httpOnly: false,
+      secure: false,
     };
 
     return res
@@ -145,6 +145,7 @@ const loginUser = async (req, res) => {
       .cookie('lastName', user.lastName, option)
       .cookie('email', user.email, option)
       .cookie('mobile', user.mobile, option)
+      .cookie('role', user.role, option)
       .json(
         new ApiResponse(
           200,
@@ -170,8 +171,8 @@ const loginUser = async (req, res) => {
 // logout user controller
 const logoutUser = async (req, res) => {
   const option = {
-    httpOnly: true,
-    secure: true,
+    httpOnly: false,
+    secure: false,
   };
 
   return res
@@ -180,6 +181,8 @@ const logoutUser = async (req, res) => {
     .clearCookie('firstName', option)
     .clearCookie('lastName', option)
     .clearCookie('email', option)
+    .clearCookie('mobile', option)
+    .clearCookie('role', option)
     .json(new ApiResponse(200, {}, 'User logged out successfully'));
 };
 
