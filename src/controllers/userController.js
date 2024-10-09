@@ -134,8 +134,8 @@ const loginUser = async (req, res) => {
     const loggedInUser = await User.findById(user._id).select('-password -otp');
 
     const option = {
-      httpOnly: true,
-      secure: true,
+      httpOnly: false,
+      secure: false,
     };
 
     return res
@@ -170,8 +170,8 @@ const loginUser = async (req, res) => {
 // logout user controller
 const logoutUser = async (req, res) => {
   const option = {
-    httpOnly: true,
-    secure: true,
+    httpOnly: false,
+    secure: false,
   };
 
   return res

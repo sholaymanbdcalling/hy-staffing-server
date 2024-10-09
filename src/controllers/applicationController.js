@@ -3,8 +3,8 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import errorHandler from '../middlewares/errorHandler.js';
 import Application from '../models/applicationModel.js';
 import cloudinary from '../utils/FileUpload/cloudinary.js';
-import fs from 'fs';
-import path from 'path';
+import EmailSend from '../utils/EmailHelper.js';
+import User from '../models/userModel.js';
 
 //application List
 const applicationList = async (req, res) => {
@@ -48,32 +48,82 @@ const applicationList = async (req, res) => {
   }
 };
 
-// update application status
-const updateStatus = async (req, res) => {
+// Update application status
+const updateApplicationStatus = async (req, res) => {
   try {
     let { role, _id } = req.user;
-    let id = req.params.id;
-    let status = req.params.status;
-    let userCount = await Profile.findOne({ userId: _id });
-    if (role === 'company' && userCount) {
-      let data = await Profile.updateOne({ _id: id }, { $set: { status: status } });
-      if (data.modifiedCount === 1) {
-        res.status(200).json(new ApiResponse(200, 'Status updated!'));
-      }
-    } else {
-      throw new Error(401, 'unauthorized');
+    let applicationId = req.params.id;
+    let status = req.body.status;
+
+    // Check if the admin exists
+    let isExistAdmin = await User.findOne({ _id: _id });
+
+    let isExistApplication = await Application.findOne({ _id: applicationId });
+
+    let isExistUser = await User.findOne({ _id: isExistApplication['userId'] });
+
+    const { firstName, lastName, email } = isExistUser;
+
+    // Application accepted
+    if (
+      role === 'company' &&
+      status === 'approved' &&
+      isExistApplication &&
+      isExistUser &&
+      isExistAdmin
+    ) {
+      await Application.updateOne({ _id: applicationId }, { $set: { status: status } });
+      let applicationMessage = `Dear ${firstName} ${lastName},
+
+      We are pleased to inform you that your application has been accepted. We will contact you shortly with further details.
+
+      Best regards,
+      Human Resource Manager
+      Hy Staffing`;
+      EmailSend(email, 'Your application is accepted', applicationMessage);
+
+      res.status(201).json({
+        status: 'ok',
+        data: 'Application status updated',
+      });
+    } else if (
+      role === 'company' &&
+      status === 'reject' &&
+      isExistApplication &&
+      isExistUser &&
+      isExistAdmin
+    ) {
+      await Application.updateOne({ _id: applicationId }, { $set: { status: status } });
+      let applicationMessage = `Dear ${firstName} ${lastName},
+
+      We regret to inform you that your application has been rejected. Thank you for your interest.
+
+      Best regards,
+      Human Resource Manager
+      Hy Staffing`;
+      EmailSend(email, 'Your application is accepted', applicationMessage);
+
+      res.status(201).json({
+        status: 'ok',
+        data: 'Application status updated',
+      });
     }
-  } catch (e) {
-    errorHandler(e, res);
+  } catch (error) {
+    // Handle any other errors
+    res.status(500).json({ status: 'failed', error: error.message });
   }
 };
 
 //Create new application
 const createApplication = async (req, res) => {
   try {
-    const userId = req.user;
+    const user = req.user;
+    const firstName = user.firstName;
+    const lastName = user.lastName;
+    const email = user.email;
+    const phone = user.mobile;
 
-    if (!userId || !userId._id) {
+    if (!user || !user._id) {
       return res.status(400).json({ message: 'User ID is missing or invalid' });
     }
 
@@ -84,12 +134,14 @@ const createApplication = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded! Only PDF files are allowed.' });
     }
 
-    const result = await uploadToCloudinary(file, userId._id);
-
-    console.log('Cloudinary response:', result);
+    const result = await uploadToCloudinary(file, user._id);
 
     const application = new Application({
-      userId: userId._id,
+      firstName,
+      lastName,
+      email,
+      phone,
+      userId: user._id,
       subject,
       message,
       file: result.secure_url,
@@ -97,17 +149,16 @@ const createApplication = async (req, res) => {
 
     await application.save();
 
+    let applicationMessage = `Thank you ${
+      firstName + ' ' + lastName
+    } . Your application is successfully received.`;
+
+    EmailSend(email, subject, applicationMessage);
+
     res.status(201).send({
       status: 'ok',
       data: {
-        message: 'File uploaded and application created successfully',
-        application: {
-          userId: userId._id,
-          subject,
-          message,
-          fileUrl: result.secure_url,
-          status: application.status,
-        },
+        message: 'Application submitted successfully',
       },
     });
   } catch (error) {
@@ -140,4 +191,4 @@ const uploadToCloudinary = (file, userId) => {
   });
 };
 
-export { applicationList, createApplication };
+export { applicationList, createApplication, updateApplicationStatus };
