@@ -1,4 +1,4 @@
-const searchQuery = (keyword, res) => {
+const searchQuery = (keyword) => {
   const forbiddenChars = /[^a-zA-Z0-9\s]/;
 
   if (!keyword || keyword.trim() === "") {
@@ -13,10 +13,9 @@ const searchQuery = (keyword, res) => {
     return { error: "Search keyword contains invalid characters" };
   }
 
-  let searchRegex = { $regex: keyword, $options: "i" };
-  let searchParams = [{ title: searchRegex }, { company: searchRegex }];
+  let searchRegex = { "$regex": keyword, "$options": "i" };
+  let searchParams = [{ title: searchRegex },{ company: searchRegex }];
   let searchQuery = { $or: searchParams };
-
   return searchQuery;
 };
 

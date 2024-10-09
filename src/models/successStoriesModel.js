@@ -1,31 +1,31 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, {Schema} from 'mongoose';
 
 const successStoriesSchema = new Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Name is required'],
-      trim: true, // Trim whitespace
+    {
+        name: {
+            type: String,
+            required: [true, 'Name is required'],
+            trim: true, // Trim whitespace
+        },
+        designation: {
+            type: String,
+            required: [true, 'Designation is required'],
+            trim: true, // Trim whitespace
+        },
+        comment: {
+            type: String,
+            required: [true, 'Comment is required'],
+            trim: true, // Trim whitespace
+        },
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+        },
     },
-    designation: {
-      type: String,
-      required: [true, 'Designation is required'],
-      trim: true, // Trim whitespace
+    {
+        timestamps: true,
+        versionKey: false,
     },
-    comment: {
-      type: String,
-      required: [true, 'Comment is required'],
-      trim: true, // Trim whitespace
-    },
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-    },
-  },
-  {
-    timestamps: true,
-    versionKey: false,
-  },
 );
 
 const SuccessStories = mongoose.model('SuccessStories', successStoriesSchema);

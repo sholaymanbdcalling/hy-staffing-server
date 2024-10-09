@@ -1,6 +1,7 @@
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import User from '../models/userModel.js';
+import Profile from '../models/profileModel.js';
 import EmailSend from '../utils/EmailHelper.js';
 import { generateToken } from '../utils/generateToken.js';
 import errorHandler from '../middlewares/errorHandler.js';
@@ -133,8 +134,8 @@ const loginUser = async (req, res) => {
     const loggedInUser = await User.findById(user._id).select('-password -otp');
 
     const option = {
-      httpOnly: true,
-      secure: true,
+      httpOnly: false,
+      secure: false,
     };
 
     return res
@@ -143,6 +144,7 @@ const loginUser = async (req, res) => {
       .cookie('firstName', user.firstName, option)
       .cookie('lastName', user.lastName, option)
       .cookie('email', user.email, option)
+      .cookie('mobile', user.mobile, option)
       .json(
         new ApiResponse(
           200,
@@ -168,8 +170,8 @@ const loginUser = async (req, res) => {
 // logout user controller
 const logoutUser = async (req, res) => {
   const option = {
-    httpOnly: true,
-    secure: true,
+    httpOnly: false,
+    secure: false,
   };
 
   return res
@@ -212,7 +214,7 @@ const changePassword = async (req, res) => {
     const updatedUser = await User.findById(user._id).select('-password -otp');
 
     // response
-    return res.status(200).json(new ApiResponse(200, updatedUser, 'Password change successfully'));
+    return res.status(200).json(new ApiResponse(200, 'Password change successfully'));
   } catch (error) {
     console.error('Error during password change:', error);
 
@@ -230,45 +232,39 @@ const changePassword = async (req, res) => {
 //user list count
 const userList = async (req, res) => {
   try {
-    const { role } = req.user;
     let pageNo = Number(req.params.pageNo);
     let perPage = Number(req.params.perPage);
     let skipRow = (pageNo - 1) * perPage;
-    if (role === 'admin') {
-      let matchStage = { $match: {} };
-      let skipStage = { $skip: skipRow };
-      let limitStage = { $limit: perPage };
-      let projectStage = { $project: { password: 0, otp: 0 } };
-      let data = await User.aggregate([matchStage, skipStage, limitStage, projectStage]);
-      let countStage = { $count: 'total' };
-      let totalCount = await User.aggregate([matchStage, countStage]);
-      res.status(200).json(new ApiResponse(200, { data, totalCount }));
-    }
-  } catch (e) {
-    errorHandler(e, res);
-  }
-};
 
-//user info
-const userInfo = async (req, res) => {
-  try {
-    const { _id } = req.user;
-    let matchStage = { $match: { _id: _id } };
-    let joinWithProfileStage = {
+    let matchStage = { $match: {} };
+    let skipStage = { $skip: skipRow };
+    let limitStage = { $limit: perPage };
+    let projectStage = {
+      $project: {
+        _id: 1,
+        email: 1,
+        mobile: 1,
+        firstName: 1,
+        lastName: 1,
+        'profile.avatar': 1,
+        role: 1,
+      },
+    };
+    let joinStage = {
       $lookup: { from: 'profiles', localField: '_id', foreignField: 'userId', as: 'profile' },
     };
     let unwindJoin = { $unwind: '$profile' };
-    let projectStage = {
-      $project: {
-        password: 0,
-        role: 0,
-        'profile?.subject': 0,
-        'profile?.message': 0,
-        'profile?.file': 0,
-      },
-    };
-    let data = await User.aggregate([matchStage, joinWithProfileStage, unwindJoin, projectStage]);
-    res.status(200).json(new ApiResponse(200, data));
+    let data = await User.aggregate([
+      matchStage,
+      skipStage,
+      limitStage,
+      joinStage,
+      unwindJoin,
+      projectStage,
+    ]);
+    let countStage = { $count: 'total' };
+    let totalCount = await User.aggregate([matchStage, countStage]);
+    res.status(200).json(new ApiResponse(200, { data, totalCount }));
   } catch (e) {
     errorHandler(e, res);
   }
@@ -277,12 +273,27 @@ const userInfo = async (req, res) => {
 //remove a user
 const removeUser = async (req, res) => {
   try {
-    const { role } = req.user;
     const id = req.params.id;
-    if (role === 'admin') {
-      let data = await User.deleteOne({ _id: id });
-      if (data.deletedCount) {
-        res.status(200).json(new ApiResponse(200, 'Removed user successfully'));
+    const { role } = req.user;
+    const userCount = await User.findById({ _id: id });
+    if ((role === 'admin' || role === 'super admin') && userCount.role === 'super admin') {
+      res.status(403).json({ message: 'Access denied' });
+    } else if (role === 'admin' && userCount.role === 'admin') {
+      res.status(403).json({ message: 'Access denied' });
+    } else {
+      let userData = await User.deleteOne({ _id: id });
+      let profileCount = await Profile.findOne({ _id: id });
+      if (profileCount !== null) {
+        let profileData = await Profile.deleteOne({ userId: id });
+        if (userData.deletedCount === 1 && profileData.deletedCount === 1) {
+          res.status(200).json(new ApiResponse(200, 'Account Deleted'));
+        }
+      } else {
+        if (userData.deletedCount === 1) {
+          res.status(200).json(new ApiResponse(200, 'Account Deleted'));
+        } else {
+          res.status(400).json({ message: 'User not found' });
+        }
       }
     }
   } catch (e) {
@@ -295,8 +306,16 @@ const deleteUserAccount = async (req, res) => {
   try {
     const { _id, role } = req.user;
     let data = await User.deleteOne({ _id: _id, role: role });
-    if (data.deletedCount) {
-      res.status(200).json(new ApiResponse(200, 'Account Delete successfully'));
+    let userCount = await Profile.findOne({ userId: _id });
+    if (userCount !== null) {
+      let profileData = await Profile.deleteOne({ userId: _id });
+      if (data.deletedCount && profileData.deletedCount) {
+        res.status(200).json(new ApiResponse(200, 'Account Delete successfully'));
+      }
+    } else {
+      if (data.deletedCount) {
+        res.status(200).json(new ApiResponse(200, 'Account Delete successfully'));
+      }
     }
   } catch (e) {
     errorHandler(e, res);
@@ -305,18 +324,29 @@ const deleteUserAccount = async (req, res) => {
 
 //update a user's role
 const updateRole = async (req, res) => {
+  const { id } = req.params;
+  const { newRole } = req.body;
+  const currentRole = req.user.role; // Role of the user making the request
+
+  // Prevent assigning super admin
+  if (newRole === 'super admin') {
+    return res.status(403).json({ message: 'You cannot assign the Super Admin role' });
+  }
+
+  // Prevent assigning admin unless the requester is super admin
+  if (newRole === 'admin' && currentRole !== 'super admin') {
+    return res.status(403).json({ message: 'Only Super Admin can assign the Admin role' });
+  }
+
   try {
-    const { role, _id } = req.user;
-    const id = req.params.id;
-    const newRole = req.params.role;
-    if (role === 'admin') {
-      const data = await User.updateOne({ _id: id }, { $set: { role: newRole } });
-      if (data.matchedCount == 1 && data.modifiedCount === 1 && data.acknowledged) {
-        res.status(200).json(new ApiResponse(200, data));
-      }
+    const updatedUser = await User.findByIdAndUpdate(id, { role: newRole }, { new: true });
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  } catch (e) {
-    errorHandler(e, res);
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating user role' });
   }
 };
 
@@ -329,6 +359,5 @@ export {
   removeUser,
   deleteUserAccount,
   updateRole,
-  userInfo,
   changePassword,
 };
