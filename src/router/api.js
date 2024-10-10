@@ -37,7 +37,7 @@ import { createTool, toolByType, updateTool } from '../controllers/toolControlle
 import { checkRole } from '../middlewares/checkRole.js';
 import { verifyJWT } from '../middlewares/authVerifyMiddleware.js';
 import { upsertHero } from '../controllers/heroController.js';
-import { updateLogo } from '../controllers/logoController.js';
+import { getLogo, updateLogo } from '../controllers/logoController.js';
 import { upload } from '../middlewares/multerMiddleware.js';
 const router = express.Router();
 
@@ -118,6 +118,7 @@ router.post(
   ]),
   updateLogo,
 );
+router.get('/getLogo', verifyJWT, getLogo);
 
 // hero routes
 router.post(
