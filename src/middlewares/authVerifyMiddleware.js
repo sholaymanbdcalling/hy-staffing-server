@@ -4,13 +4,14 @@ import { ApiError } from '../utils/ApiError.js';
 
 export const verifyJWT = async (req, _, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '') || req.cookies.token;
+    const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
+    console.log('Token:', token); // Log the token for debugging
     if (!token) {
       throw new ApiError(401, 'Unauthorized request');
     }
 
     const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
-    const user = await User.findById(decodedToken?.userId).select('-password -otp');
+    const user = await User.findById(decodedToken?._id).select('-password -otp');
     if (!user) {
       throw new ApiError(401, 'Invalid accessToken');
     }
@@ -18,6 +19,7 @@ export const verifyJWT = async (req, _, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.error('Error in verifyJWT:', error); // Log the error for debugging
     throw new ApiError(401, 'Something went wrong');
   }
 };
