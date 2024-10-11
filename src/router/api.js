@@ -36,9 +36,15 @@ import {
 import { createTool, toolByType, updateTool } from '../controllers/toolController.js';
 import { checkRole } from '../middlewares/checkRole.js';
 import { verifyJWT } from '../middlewares/authVerifyMiddleware.js';
+import uploadPdf from '../utils/FileUpload/multer.js';
+import {
+  createApplication,
+  updateApplicationStatus,
+} from '../controllers/applicationController.js';
 import { upsertHero } from '../controllers/heroController.js';
 import { getLogo, updateLogo } from '../controllers/logoController.js';
 import { upload } from '../middlewares/multerMiddleware.js';
+
 const router = express.Router();
 
 // User routers
@@ -73,6 +79,8 @@ router.put('/updateJob/:id', verifyJWT, updateJob);
 router.get('/searchByKeyword/:pageNo/:perPage/:keyword', searchByKeyword);
 router.post('/filterJob/:pageNo/:perPage', filterJob);
 router.get('/listByCategory/:pageNo/:perPage/:id', verifyJWT, listByCategory);
+router.post('/application', verifyJWT, uploadPdf.single('file'), createApplication);
+router.post('/update/application/status/:id', verifyJWT, updateApplicationStatus);
 
 //profile router
 router.post('/saveProfile', verifyJWT, saveProfile);
