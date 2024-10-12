@@ -72,16 +72,57 @@ const removeCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     const id = req.params.id;
-    const { categoryName, image } = req.body;
-    let updateConditions = {};
-    if (categoryName !== undefined) {
+    const { categoryName, existingCategoryImage } = req.body;
+    let categoryImage;
+
+    // Check if a new image file is uploaded
+    if (req.files && req.files.categoryImage && req.files.categoryImage.length > 0) {
+      // Get image local path
+      const imageLocalPath = req.files.categoryImage[0].path;
+
+      // Upload image to cloud storage
+      const cloudinaryResponse = await uploadOnCloudinary(imageLocalPath);
+      if (!cloudinaryResponse || !cloudinaryResponse.secure_url) {
+        throw new ApiError(400, 'Image upload failed');
+      }
+
+      // Extract the secure URL for saving to the database
+      categoryImage = cloudinaryResponse.secure_url;
+    } else if (existingCategoryImage) {
+      // Use the existing image URL if no new image is uploaded
+      categoryImage = existingCategoryImage;
+    } else {
+      // If no image is provided in either way, return an error
+      throw new ApiError(400, 'Image file is required');
+    }
+
+    // Prepare update conditions
+    const updateConditions = {};
+    if (categoryName) {
       updateConditions.categoryName = categoryName;
     }
-    if (image !== undefined) {
-      updateConditions.image = image;
+    if (categoryImage) {
+      updateConditions.categoryImage = categoryImage;
     }
-    await Category.updateOne({ _id: id }, updateConditions, { new: true });
-    res.status(200).json(new ApiResponse(200, 'Category Update Successfully'));
+
+    // Check if there are no fields to update
+    if (Object.keys(updateConditions).length === 0) {
+      return res.status(400).json(new ApiResponse(400, 'No fields to update'));
+    }
+
+    // Update the category
+    const updatedCategory = await Category.findByIdAndUpdate(
+      id,
+      updateConditions,
+      { new: true }, // This option returns the modified document rather than the original
+    );
+
+    // Check if category was found and updated
+    if (!updatedCategory) {
+      return res.status(404).json(new ApiResponse(404, 'Category not found'));
+    }
+
+    res.status(200).json(new ApiResponse(200, updatedCategory, 'Category updated successfully'));
   } catch (e) {
     errorHandler(e, res);
   }
