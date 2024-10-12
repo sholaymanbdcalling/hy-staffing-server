@@ -109,7 +109,13 @@ router.delete(
   checkRole(['super admin', 'admin']),
   removeCategory,
 );
-router.put('/updateCategory/:id', verifyJWT, checkRole(['super admin', 'admin']), updateCategory);
+router.put(
+  '/updateCategory/:id',
+  verifyJWT,
+  checkRole(['super admin', 'admin']),
+  upload.fields([{ name: 'categoryImage', maxCount: 1 }]),
+  updateCategory,
+);
 
 //tool routes
 router.post('/createTool', verifyJWT, checkRole(['super admin', 'admin']), createTool);
