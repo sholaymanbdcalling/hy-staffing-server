@@ -130,7 +130,6 @@ const filterJob = async (req, res) => {
     const { keyword, categoryId, jobType, location } = req.body;
     let matchConditions = {};
     let locationMessage = '';
-    console.log('Request Body:', req.body);
 
     // Keyword filtering
     if (keyword) {
@@ -170,9 +169,6 @@ const filterJob = async (req, res) => {
       const fuse = new Fuse(cities, options);
       const results = fuse.search(location);
 
-      // Debugging: Log the results of the Fuse.js search
-      console.log('Fuse.js Results:', results);
-
       if (results.length > 0) {
         const bestMatch = results[0].item.city;
         matchConditions.city = { $regex: bestMatch, $options: 'i' };
@@ -182,28 +178,14 @@ const filterJob = async (req, res) => {
       }
     }
 
-    // Debugging logs
-    console.log('Match Conditions Before Query:', matchConditions);
-
     // Get job data
     data = await Job.aggregate([{ $match: matchConditions }]);
-
-    // Debugging: Log the initial job data
-    console.log('Initial Job Data:', data);
 
     // If no jobs matched, remove the city condition and retry
     if (data.length === 0) {
       delete matchConditions.city; // Remove city filter
-      console.log('Retrying Without City Filter...');
       data = await Job.aggregate([{ $match: matchConditions }]);
-
-      // Debugging: Log job data after removing the city filter
-      console.log('Job Data After Removing City Filter:', data);
     }
-
-    // Debugging: Log final job data and match conditions
-    console.log('Final Job Data:', data);
-    console.log('Final Match Conditions:', matchConditions);
 
     // Send the response with matchConditions for debugging
     res
