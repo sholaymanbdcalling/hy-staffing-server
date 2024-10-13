@@ -42,7 +42,7 @@ import {
   updateApplicationStatus,
 } from '../controllers/applicationController.js';
 import { upsertHero } from '../controllers/heroController.js';
-import { updateLogo } from '../controllers/logoController.js';
+import { getLogo, updateLogo } from '../controllers/logoController.js';
 import { upload } from '../middlewares/multerMiddleware.js';
 
 const router = express.Router();
@@ -96,14 +96,26 @@ router.put('/updateStory/:id', verifyJWT, updateStory);
 
 //category routes
 router.get('/categoryList', categoryList);
-router.post('/createCategory', verifyJWT, checkRole(['super admin', 'admin']), createCategory);
+router.post(
+  '/createCategory',
+  verifyJWT,
+  checkRole(['super admin', 'admin']),
+  upload.fields([{ name: 'categoryImage', maxCount: 1 }]),
+  createCategory,
+);
 router.delete(
   '/removeCategory/:id',
   verifyJWT,
   checkRole(['super admin', 'admin']),
   removeCategory,
 );
-router.put('/updateCategory/:id', verifyJWT, checkRole(['super admin', 'admin']), updateCategory);
+router.put(
+  '/updateCategory/:id',
+  verifyJWT,
+  checkRole(['super admin', 'admin']),
+  upload.fields([{ name: 'categoryImage', maxCount: 1 }]),
+  updateCategory,
+);
 
 //tool routes
 router.post('/createTool', verifyJWT, checkRole(['super admin', 'admin']), createTool);
@@ -126,6 +138,7 @@ router.post(
   ]),
   updateLogo,
 );
+router.get('/getLogo', getLogo);
 
 // hero routes
 router.post(

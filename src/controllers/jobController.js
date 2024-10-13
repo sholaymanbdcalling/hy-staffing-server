@@ -3,7 +3,7 @@ import Job from '../models/jobModel.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import mongoose from 'mongoose';
 import searchQuery from '../utils/searchQuery.js';
-import City from '../models/cityModel.js'; // Your Mongoose model for cities
+import City from '../models/cityModel.js';
 const { ObjectId } = mongoose.Types;
 import Fuse from 'fuse.js';
 
