@@ -12,7 +12,7 @@ import cookieParser from 'cookie-parser';
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  limit: 100,
+  limit: 400,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
 });
