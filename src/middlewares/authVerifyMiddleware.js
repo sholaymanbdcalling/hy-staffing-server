@@ -10,7 +10,7 @@ export const verifyJWT = async (req, _, next) => {
     }
 
     const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
-    const user = await User.findById(decodedToken?.userId).select('-password -otp');
+    const user = await User.findById(decodedToken?._id).select('-password -otp');
     if (!user) {
       throw new ApiError(401, 'Invalid accessToken');
     }
