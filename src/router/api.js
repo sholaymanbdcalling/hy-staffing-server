@@ -6,6 +6,7 @@ import {
   logoutUser,
   registerUser,
   removeUser,
+  updatePersonalInfo,
   updateRole,
   userList,
   verifyEmail,
@@ -38,7 +39,9 @@ import { checkRole } from '../middlewares/checkRole.js';
 import { verifyJWT } from '../middlewares/authVerifyMiddleware.js';
 import uploadPdf from '../utils/FileUpload/multer.js';
 import {
+  applicationList,
   createApplication,
+  deleteApplication,
   updateApplicationStatus,
 } from '../controllers/applicationController.js';
 import { upsertHero } from '../controllers/heroController.js';
@@ -65,6 +68,7 @@ router.delete('/removeUser/:id', verifyJWT, checkRole(['super admin', 'admin']),
 router.delete('/deleteUserAccount', verifyJWT, deleteUserAccount);
 router.put('/updateRole/:id', verifyJWT, checkRole(['super admin', 'admin']), updateRole);
 router.put('/updateProfile', verifyJWT, updateProfile);
+router.put('/updatePersonalInfo', verifyJWT, updatePersonalInfo);
 
 //Job router
 router.get('/jobList/:pageNo/:perPage', jobList);
@@ -80,7 +84,9 @@ router.get('/searchByKeyword/:pageNo/:perPage/:keyword', searchByKeyword);
 router.post('/filterJob/:pageNo/:perPage', filterJob);
 router.get('/listByCategory/:pageNo/:perPage/:id', verifyJWT, listByCategory);
 router.post('/application', verifyJWT, uploadPdf.single('file'), createApplication);
-router.post('/update/application/status/:id', verifyJWT, updateApplicationStatus);
+router.put('/update/application/status/:id', verifyJWT, updateApplicationStatus);
+router.get('/application/list/:pageNo/:perPage', verifyJWT, applicationList);
+router.delete('/application/delete/:id', verifyJWT, deleteApplication);
 
 //profile router
 router.post('/saveProfile', verifyJWT, saveProfile);

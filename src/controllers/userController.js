@@ -254,19 +254,26 @@ const userList = async (req, res) => {
       },
     };
     let joinStage = {
-      $lookup: { from: 'profiles', localField: '_id', foreignField: 'userId', as: 'profile' },
+      $lookup: {
+        from: 'profiles',
+        localField: '_id',
+        foreignField: 'userId',
+        as: 'profile',
+      },
     };
-    let unwindJoin = { $unwind: '$profile' };
+    let unwindJoin = { $unwind: { path: '$profile', preserveNullAndEmptyArrays: true } };
     let data = await User.aggregate([
       matchStage,
-      skipStage,
-      limitStage,
       joinStage,
       unwindJoin,
+      skipStage,
+      limitStage,
       projectStage,
     ]);
+
     let countStage = { $count: 'total' };
-    let totalCount = await User.aggregate([matchStage, countStage]);
+    let totalCount = await User.aggregate([matchStage, joinStage, unwindJoin, countStage]);
+
     res.status(200).json(new ApiResponse(200, { data, totalCount }));
   } catch (e) {
     errorHandler(e, res);
@@ -289,11 +296,11 @@ const removeUser = async (req, res) => {
       if (profileCount !== null) {
         let profileData = await Profile.deleteOne({ userId: id });
         if (userData.deletedCount === 1 && profileData.deletedCount === 1) {
-          res.status(200).json(new ApiResponse(200, 'Account Deleted'));
+          res.status(200).json({ status: 'ok', data: 'Account Deleted' });
         }
       } else {
         if (userData.deletedCount === 1) {
-          res.status(200).json(new ApiResponse(200, 'Account Deleted'));
+          res.status(200).json({ status: 'ok', data: 'Account Deleted' });
         } else {
           res.status(400).json({ message: 'User not found' });
         }
@@ -327,6 +334,10 @@ const deleteUserAccount = async (req, res) => {
 
 //update a user's role
 const updateRole = async (req, res) => {
+  // const id = req.params.id;
+  // const role = req.body.newRole;
+
+  // res.send({ id: id, role: role });
   const { id } = req.params;
   const { newRole } = req.body;
   const currentRole = req.user.role; // Role of the user making the request
@@ -347,10 +358,35 @@ const updateRole = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({ status: 'ok', data: updatedUser });
   } catch (error) {
     res.status(500).json({ message: 'Error updating user role' });
   }
+};
+
+//update personal info
+const updatePersonalInfo = async (req, res) => {
+  try {
+    const { _id } = req.user;
+    const { firstName, lastName, mobile } = req.body;
+    let updateFields = {};
+    if (firstName !== undefined) {
+      updateFields.firstName = firstName;
+    }
+    if (lastName !== undefined) {
+      updateFields.lastName = lastName;
+    }
+    if (mobile !== undefined) {
+      updateFields.mobile = mobile;
+    }
+
+    let data = await User.updateOne({ _id: _id }, updateFields, { new: true });
+    if (data.acknowledged && data.modifiedCount === 1 && data.matchedCount === 1) {
+      res.status(200).json(new ApiResponse(200, 'Profile updated successfully!'));
+    } else {
+      res.status(400).json({ message: 'Nothing to update!' });
+    }
+  } catch (e) {}
 };
 
 export {
@@ -363,4 +399,5 @@ export {
   deleteUserAccount,
   updateRole,
   changePassword,
+  updatePersonalInfo,
 };

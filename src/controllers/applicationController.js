@@ -1,4 +1,3 @@
-import Profile from '../models/profileModel.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import errorHandler from '../middlewares/errorHandler.js';
 import Application from '../models/applicationModel.js';
@@ -12,37 +11,32 @@ const applicationList = async (req, res) => {
     let pageNo = Number(req.params.pageNo);
     let perPage = Number(req.params.perPage);
     let skipRow = (pageNo - 1) * perPage;
+
     let matchStage = { $match: {} };
+    let projectStage = {
+      $project: {
+        _id: 1,
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        phone: 1,
+        file: 1,
+        userId: 1,
+        subject: 1,
+        message: 1,
+        status: 1,
+      },
+    };
     let skipStage = { $skip: skipRow };
     let limitStage = { $limit: perPage };
     let countStage = { $count: 'total' };
-    let data = await Profile.aggregate([
-      matchStage,
-      skipStage,
-      limitStage,
-      {
-        $addFields: {
-          sortOrder: {
-            $switch: {
-              branches: [
-                { case: { $eq: ['$status', 'P'] }, then: 1 }, // Highest priority
-                { case: { $eq: ['$status', 'A'] }, then: 2 }, // Second priority
-                { case: { $eq: ['$status', 'R'] }, then: 3 }, // Lowest priority
-              ],
-              default: 4, // For any other status values
-            },
-          },
-        },
-      },
-      {
-        $sort: { sortOrder: 1 }, // Sort by the sortOrder field in ascending order
-      },
-      {
-        $project: { sortOrder: 0 }, // Remove the sortOrder field from the output
-      },
-    ]);
-    let totalCount = await Profile.aggregate([matchStage, countStage]);
-    res.status(200).json(new ApiResponse(200, { data, totalCount }));
+
+    // Fetch paginated data
+    let data = await Application.aggregate([matchStage, projectStage, skipStage, limitStage]);
+    // Fetch total count
+    let totalCount = await Application.aggregate([matchStage, countStage]);
+
+    res.status(200).json({ status: 'ok', data: data, totalCount: totalCount });
   } catch (e) {
     errorHandler(e, res);
   }
@@ -60,48 +54,38 @@ const updateApplicationStatus = async (req, res) => {
 
     let isExistApplication = await Application.findOne({ _id: applicationId });
 
-    let isExistUser = await User.findOne({ _id: isExistApplication['userId'] });
+    console.log('This is applicant user id ', isExistApplication['userId'].toString());
 
-    const { firstName, lastName, email } = isExistUser;
+    console.log(isExistApplication['firstName']);
+    console.log(isExistApplication['lastName']);
+    console.log(isExistApplication['email']);
 
     // Application accepted
-    if (
-      role === 'company' &&
-      status === 'approved' &&
-      isExistApplication &&
-      isExistUser &&
-      isExistAdmin
-    ) {
+    if (role === 'company' && status === 'Accepted' && isExistApplication && isExistAdmin) {
       await Application.updateOne({ _id: applicationId }, { $set: { status: status } });
-      let applicationMessage = `Dear ${firstName} ${lastName},
+      let applicationMessage = `Dear ${isExistApplication['firstName']} ${isExistApplication['lastName']},
 
       We are pleased to inform you that your application has been accepted. We will contact you shortly with further details.
 
       Best regards,
       Human Resource Manager
       Hy Staffing`;
-      EmailSend(email, 'Your application is accepted', applicationMessage);
+      EmailSend(isExistApplication['email'], 'Your application is accepted', applicationMessage);
 
       res.status(201).json({
         status: 'ok',
         data: 'Application status updated',
       });
-    } else if (
-      role === 'company' &&
-      status === 'reject' &&
-      isExistApplication &&
-      isExistUser &&
-      isExistAdmin
-    ) {
+    } else if (role === 'company' && status === 'Rejected' && isExistApplication && isExistAdmin) {
       await Application.updateOne({ _id: applicationId }, { $set: { status: status } });
-      let applicationMessage = `Dear ${firstName} ${lastName},
+      let applicationMessage = `Dear ${isExistApplication['firstName']} ${isExistApplication['lastName']},
 
       We regret to inform you that your application has been rejected. Thank you for your interest.
 
       Best regards,
       Human Resource Manager
       Hy Staffing`;
-      EmailSend(email, 'Your application is accepted', applicationMessage);
+      EmailSend(isExistApplication['email'], 'Your application is accepted', applicationMessage);
 
       res.status(201).json({
         status: 'ok',
@@ -191,4 +175,14 @@ const uploadToCloudinary = (file, userId) => {
   });
 };
 
-export { applicationList, createApplication, updateApplicationStatus };
+const deleteApplication = async (req, res) => {
+  try {
+    const id = req.params.id;
+    await Application.deleteOne({ _id: id });
+    res.status(200).json({ status: 'ok', message: 'Application is deleted' });
+  } catch (error) {
+    res.status(200).json('Something wents wrong');
+  }
+};
+
+export { applicationList, createApplication, updateApplicationStatus, deleteApplication };

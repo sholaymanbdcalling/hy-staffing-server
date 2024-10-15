@@ -81,7 +81,7 @@ const updateProfile = async (req, res) => {
       updateFields.linkedIn = linkedIn; // Only update if linkedIN is present
     }
     if (avatar) {
-      updateFields.avatar = avatar; // Assuming you're handling the image upload via multer
+      updateFields.avatar = avatar;
     }
 
     let data = await Profile.updateOne({ userId: _id }, updateFields, { new: true });
